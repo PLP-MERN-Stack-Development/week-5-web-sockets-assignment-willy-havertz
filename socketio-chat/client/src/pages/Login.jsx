@@ -1,7 +1,8 @@
+
+
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 
 export default function Login() {
@@ -13,11 +14,17 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Send credentials to backend
       const res = await axios.post("http://localhost:5000/api/auth/login", {
         username,
         password,
       });
-      login(res.data);
+
+      // Backend responds with { user, token }
+      const { token, user } = res.data;
+      login({ token, username: user.username });
+
+      // Redirect to chat room
       navigate("/chat");
     } catch (err) {
       alert(err.response?.data?.error || "Login failed");
@@ -27,32 +34,37 @@ export default function Login() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="max-w-md mx-auto p-6 mt-20 bg-[var(--surface)] rounded"
+      className="max-w-md mx-auto p-6 mt-20 bg-[var(--surface)] rounded shadow"
     >
-      <h1 className="text-2xl mb-4">Login</h1>
+      <h1 className="text-2xl mb-4 text-center">Login</h1>
+
       <input
-        className="w-full p-2 mb-2 border rounded"
+        type="text"
+        className="w-full p-2 mb-2 border rounded focus:outline-none focus:ring focus:ring-[var(--accent)]"
         placeholder="Username"
         value={username}
         onChange={(e) => setUsername(e.target.value)}
         required
       />
+
       <input
         type="password"
-        className="w-full p-2 mb-4 border rounded"
+        className="w-full p-2 mb-4 border rounded focus:outline-none focus:ring focus:ring-[var(--accent)]"
         placeholder="Password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         required
       />
+
       <button
         type="submit"
-        className="w-full py-2 bg-[var(--accent)] text-white rounded"
+        className="w-full py-2 bg-[var(--accent)] text-white rounded font-semibold hover:opacity-90 transition"
       >
         Log In
       </button>
-      <p className="mt-4 text-sm text-gray-500">
-        Don't have an account?{" "}
+
+      <p className="mt-4 text-sm text-gray-400 text-center">
+        Don’t have an account?{" "}
         <Link to="/register" className="text-[var(--accent)] hover:underline">
           Sign up
         </Link>

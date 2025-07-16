@@ -13,19 +13,41 @@ export default function ChatRoom() {
   const [typing, setTyping] = useState(null);
 
   useEffect(() => {
+    // Join the chat with your JWT for authentication
     socket.emit("join", { token });
 
-    socket.on("users", setUsers);
-    socket.on("notification", (note) =>
-      setMessages((m) => [...m, { system: true, text: note }])
-    );
-    socket.on("message", (msg) => setMessages((m) => [...m, msg]));
-    socket.on("typing", (data) => setTyping(data));
+    // Update the online users list
+    socket.on("users", (list) => setUsers(list));
 
+    // System notifications (user join/leave)
+    socket.on("notification", (note) => {
+      setMessages((prev) => [...prev, { system: true, text: note }]);
+    });
+
+    // Incoming chat messages
+    socket.on("message", (msg) => {
+      setMessages((prev) => [...prev, msg]);
+    });
+
+    // Typing indicator events
+    socket.on("typing", (data) => {
+      setTyping(data);
+    });
+
+    // Clean up on unmount
     return () => {
+      socket.off("users");
+      socket.off("notification");
+      socket.off("message");
+      socket.off("typing");
       socket.disconnect();
     };
   }, [token]);
+
+  // Local echo: immediately append your own message
+  const handleLocalSend = (msg) => {
+    setMessages((prev) => [...prev, msg]);
+  };
 
   return (
     <div className="flex flex-col h-screen">
@@ -42,7 +64,7 @@ export default function ChatRoom() {
         <main className="flex flex-col flex-1">
           <MessageList messages={messages} />
           <TypingIndicator typing={typing} />
-          <ChatInput />
+          <ChatInput onLocalSend={handleLocalSend} />
         </main>
       </div>
     </div>

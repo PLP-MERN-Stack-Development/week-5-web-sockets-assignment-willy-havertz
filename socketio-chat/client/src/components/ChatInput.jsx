@@ -1,12 +1,24 @@
 import { useState } from "react";
-import { socket } from "../socket/socket";
+import { socket } from "../socket/socket.js";
 
-export default function ChatInput() {
+export default function ChatInput({ onLocalSend }) {
   const [text, setText] = useState("");
 
   const send = () => {
     if (!text.trim()) return;
+
+    // 1) Optimistically add the message locally
+    onLocalSend({
+      sender: "You",
+      text,
+      time: new Date().toLocaleTimeString(),
+      system: false,
+    });
+
+    // 2) Emit to server
     socket.emit("message", text);
+
+    // Clear input and stop typing indicator
     setText("");
     socket.emit("typing", false);
   };
